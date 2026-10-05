@@ -1,0 +1,38 @@
+// use prisma-8
+
+model Course {
+  id         Int    @id @default(autoincrement())
+  title      String
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+  location   String?
+  color      String @default("#3b82f6")
+}
+
+model SportSession {
+  id         Int    @id @default(autoincrement())
+  activity   String
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+  location   String?
+  color      String @default("#ef4444")
+}
+
+model Holiday {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  title     String
+  content   String?
+  type      String   @default("note")
+  color     String   @default("#8b5cf6")
+  createdAt DateTime @default(now())
+}
