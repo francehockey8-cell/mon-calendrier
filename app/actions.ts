@@ -33,13 +33,12 @@ export async function signupAction(formData: FormData) {
   const password = formData.get('password') as string;
 
   if (!email || !password || password.length < 6) {
-    return { error: 'Email et mot de passe (min 6 caractères) requis.' };
+    redirect('/signup?error=missing');
   }
 
-  // Vérifier si un user existe déjà → interdit
   const existing = await db.orm.public.User.all();
   if (existing.length > 0) {
-    return { error: 'Un compte existe déjà. Un seul compte est autorisé.' };
+    redirect('/signup?error=taken');
   }
 
   const hash = await hashPassword(password);
@@ -50,7 +49,7 @@ export async function signupAction(formData: FormData) {
   });
 
   const id = (created as any)?.id;
-  if (!id) return { error: 'Erreur lors de la création du compte.' };
+  if (!id) redirect('/signup?error=create');
   await createSession(id);
   redirect('/');
 }
@@ -60,14 +59,14 @@ export async function loginAction(formData: FormData) {
   const email = (formData.get('email') as string)?.trim().toLowerCase();
   const password = formData.get('password') as string;
 
-  if (!email || !password) return { error: 'Email et mot de passe requis.' };
+  if (!email || !password) redirect('/login?error=missing');
 
   const users = await db.orm.public.User.where({ email }).all();
   const user = users[0];
-  if (!user) return { error: 'Identifiants invalides.' };
+  if (!user) redirect('/login?error=invalid');
 
   const ok = await verifyPassword(password, user.passwordHash);
-  if (!ok) return { error: 'Identifiants invalides.' };
+  if (!ok) redirect('/login?error=invalid');
 
   await createSession(user.id);
   redirect('/');
@@ -90,17 +89,14 @@ export async function getCourses() {
   await requireOwner();
   return db.orm.public.Course.all();
 }
-
 export async function getSports() {
   await requireOwner();
   return db.orm.public.SportSession.all();
 }
-
 export async function getHolidays() {
   await requireOwner();
   return db.orm.public.Holiday.all();
 }
-
 export async function getNotes() {
   await requireOwner();
   return db.orm.public.Note.all();
@@ -162,13 +158,11 @@ export async function deleteNote(id: number) {
   await db.orm.public.Note.delete({ id });
   revalidatePath('/', 'layout');
 }
-
 export async function deleteCourse(id: number) {
   await requireOwner();
   await db.orm.public.Course.delete({ id });
   revalidatePath('/', 'layout');
 }
-
 export async function deleteSport(id: number) {
   await requireOwner();
   await db.orm.public.SportSession.delete({ id });

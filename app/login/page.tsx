@@ -1,13 +1,23 @@
-import Link from 'next/link';
 import { loginAction } from '../actions';
 import { redirect } from 'next/navigation';
 import { db, connectDB } from '@/lib/db';
 
-export default async function LoginPage() {
+const ERRORS: Record<string, string> = {
+  missing: 'Email et mot de passe requis.',
+  invalid: 'Identifiants invalides.',
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   await connectDB();
-  // Si aucun user n'existe → rediriger vers signup
   const users = await db.orm.public.User.all();
   if (users.length === 0) redirect('/signup');
+
+  const { error } = await searchParams;
+  const errorMsg = error ? ERRORS[error] || 'Erreur inconnue.' : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-4">
@@ -22,6 +32,12 @@ export default async function LoginPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">Ton calendrier perso</p>
         </div>
+
+        {errorMsg && (
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 text-xs text-red-700 dark:text-red-300 text-center">
+            {errorMsg}
+          </div>
+        )}
 
         <input
           name="email"

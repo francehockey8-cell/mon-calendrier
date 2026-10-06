@@ -2,11 +2,23 @@ import { signupAction } from '../actions';
 import { db, connectDB } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
-export default async function SignupPage() {
+const ERRORS: Record<string, string> = {
+  missing: 'Email et mot de passe (min 6 caractères) requis.',
+  taken: 'Un compte existe déjà. Un seul compte est autorisé.',
+  create: 'Erreur lors de la création du compte.',
+};
+
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   await connectDB();
   const users = await db.orm.public.User.all();
-  // Si un user existe déjà → interdit de créer un nouveau compte
   if (users.length > 0) redirect('/login');
+
+  const { error } = await searchParams;
+  const errorMsg = error ? ERRORS[error] || 'Erreur inconnue.' : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 p-4">
@@ -23,6 +35,12 @@ export default async function SignupPage() {
             Ce compte sera le propriétaire du calendrier
           </p>
         </div>
+
+        {errorMsg && (
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 text-xs text-red-700 dark:text-red-300 text-center">
+            {errorMsg}
+          </div>
+        )}
 
         <input
           name="email"
