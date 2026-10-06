@@ -1,5 +1,13 @@
 // use prisma-8
 
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  isOwner      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
 model Course {
   id           Int       @id @default(autoincrement())
   title        String
@@ -15,17 +23,18 @@ model Course {
 }
 
 model SportSession {
-  id           Int       @id @default(autoincrement())
-  activity     String
-  dayOfWeek    Int
-  startTime    String
-  endTime      String
-  location     String?
-  color        String    @default("#ef4444")
-  frequency    String    @default("weekly")
-  startDate    DateTime?
-  endDate      DateTime?
-  skipHolidays Boolean   @default(false)
+  id             Int       @id @default(autoincrement())
+  activity       String
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  location       String?
+  color          String    @default("#ef4444")
+  frequency      String    @default("weekly")
+  startDate      DateTime?
+  endDate        DateTime?
+  skipHolidays   Boolean   @default(false)
+  completedDates String    @default("")
 }
 
 model Holiday {

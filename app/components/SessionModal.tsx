@@ -5,18 +5,13 @@ import { useRouter } from 'next/navigation';
 import { updateSport, updateCourse, deleteSport, deleteCourse } from '../actions';
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-
 const COLORS = [
   '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6',
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
   '#6366f1', '#eab308', '#10b981', '#64748b',
 ];
 
-type Props = {
-  session: any;
-  type: 'sport' | 'course';
-  onClose: () => void;
-};
+type Props = { session: any; type: 'sport' | 'course'; onClose: () => void };
 
 export default function SessionModal({ session, type, onClose }: Props) {
   const router = useRouter();
@@ -43,21 +38,12 @@ export default function SessionModal({ session, type, onClose }: Props) {
     setError(null);
     try {
       const payload: any = {
-        dayOfWeek,
-        startTime,
-        endTime,
-        location: location || null,
-        color,
-        frequency,
-        startDate: startDate || null,
-        endDate: endDate || null,
-        skipHolidays,
+        dayOfWeek, startTime, endTime,
+        location: location || null, color, frequency,
+        startDate: startDate || null, endDate: endDate || null, skipHolidays,
       };
-      if (type === 'sport') {
-        await updateSport(session.id, { ...payload, activity: title });
-      } else {
-        await updateCourse(session.id, { ...payload, title });
-      }
+      if (type === 'sport') await updateSport(session.id, { ...payload, activity: title });
+      else await updateCourse(session.id, { ...payload, title });
       router.refresh();
       onClose();
     } catch (e: any) {
@@ -74,9 +60,7 @@ export default function SessionModal({ session, type, onClose }: Props) {
       else await deleteCourse(session.id);
       router.refresh();
       onClose();
-    } catch (e: any) {
-      setError(e?.message || 'Erreur suppression');
-    }
+    } catch (e: any) { setError(e?.message || 'Erreur suppression'); }
   };
 
   const duration = (() => {
@@ -96,40 +80,28 @@ export default function SessionModal({ session, type, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* En-tête */}
         <div
           className="p-5 rounded-t-2xl"
-          style={{
-            backgroundColor: color + '33',
-            borderTop: `4px solid ${color}`,
-          }}
+          style={{ backgroundColor: color + '33', borderTop: `4px solid ${color}` }}
         >
           <div className="flex justify-between items-start">
             <div>
-              <div className="text-xs text-slate-600 uppercase font-medium mb-1">
+              <div className="text-xs text-slate-600 dark:text-slate-300 uppercase font-medium mb-1">
                 {type === 'sport' ? '🏒 Sport' : '📚 Cours'}
               </div>
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-bold dark:text-slate-100">
                 {session.title || session.activity}
               </h2>
             </div>
-            <button
-              onClick={onClose}
-              className="text-slate-500 hover:text-slate-800 text-2xl leading-none -mt-1"
-            >
-              ×
-            </button>
+            <button onClick={onClose} className="text-slate-500 text-2xl leading-none -mt-1">×</button>
           </div>
         </div>
 
-        {/* Bandeau récurrence */}
-        <div className="bg-blue-50 border-b border-blue-100 px-5 py-2 text-xs text-blue-800 flex flex-col gap-1">
-          <div>
-            🔁 <b>{freqLabel}</b> — le <b>{JOURS[dayOfWeek - 1]}</b>
-          </div>
+        <div className="bg-blue-50 dark:bg-blue-900/30 border-b border-blue-100 dark:border-blue-800 px-5 py-2 text-xs text-blue-800 dark:text-blue-200 flex flex-col gap-1">
+          <div>🔁 <b>{freqLabel}</b> — le <b>{JOURS[dayOfWeek - 1]}</b></div>
           {(startDate || endDate) && (
             <div className="text-[11px]">
               {startDate && <>Du {new Date(startDate).toLocaleDateString('fr-FR')}</>}
@@ -141,7 +113,7 @@ export default function SessionModal({ session, type, onClose }: Props) {
 
         <div className="p-5 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 text-xs text-red-700 dark:text-red-300">
               ❌ {error}
             </div>
           )}
@@ -155,193 +127,86 @@ export default function SessionModal({ session, type, onClose }: Props) {
                 <Row label="🔁 Fréquence" value={freqLabel} />
                 {location && <Row label="📍 Lieu" value={location} />}
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">🎨 Couleur</span>
-                  <div
-                    className="w-6 h-6 rounded-full border border-slate-200"
-                    style={{ backgroundColor: color }}
-                  />
+                  <span className="text-slate-500 dark:text-slate-400">🎨 Couleur</span>
+                  <div className="w-6 h-6 rounded-full border border-slate-200" style={{ backgroundColor: color }} />
                 </div>
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => setEditing(true)}
-                  className="flex-1 bg-blue-500 text-white rounded-lg py-2 text-sm hover:bg-blue-600"
-                >
-                  ✏️ Modifier
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="flex-1 bg-red-100 text-red-600 rounded-lg py-2 text-sm hover:bg-red-200"
-                >
-                  🗑️ Supprimer
-                </button>
+                <button onClick={() => setEditing(true)} className="flex-1 bg-blue-500 text-white rounded-lg py-2 text-sm hover:bg-blue-600">✏️ Modifier</button>
+                <button onClick={handleDelete} className="flex-1 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 rounded-lg py-2 text-sm hover:bg-red-200">🗑️ Supprimer</button>
               </div>
             </>
           ) : (
             <>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-800">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2 text-xs text-amber-800 dark:text-amber-200">
                 ⚠️ Modifier affectera <b>toutes les semaines</b>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600">Nom</label>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                />
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Nom</label>
+                <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1" />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600">Jour</label>
-                <select
-                  value={dayOfWeek}
-                  onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                >
-                  {JOURS.map((j, i) => (
-                    <option key={j} value={i + 1}>{j}</option>
-                  ))}
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Jour</label>
+                <select value={dayOfWeek} onChange={(e) => setDayOfWeek(parseInt(e.target.value))} className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1">
+                  {JOURS.map((j, i) => <option key={j} value={i + 1}>{j}</option>)}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-600">Début</label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                  />
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Début</label>
+                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600">Fin</label>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                  />
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Fin</label>
+                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1" />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600">Lieu</label>
-                <input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="(optionnel)"
-                  className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                />
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Lieu</label>
+                <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="(optionnel)" className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1" />
               </div>
 
-              {/* Sélecteur de couleur */}
               <div>
-                <label className="text-xs font-medium text-slate-600">Couleur</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Couleur</label>
                 <div className="grid grid-cols-7 gap-2 mt-2">
                   {COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setColor(c)}
-                      className={`w-8 h-8 rounded-full border-2 transition ${
-                        color === c ? 'border-slate-800 scale-110' : 'border-slate-200'
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
+                    <button key={c} type="button" onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 ${color === c ? 'border-slate-800 scale-110' : 'border-slate-200'}`} style={{ backgroundColor: c }} />
                   ))}
                 </div>
               </div>
 
-              {/* Fréquence */}
               <div>
-                <label className="text-xs font-medium text-slate-600">Fréquence</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Fréquence</label>
                 <div className="flex gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => setFrequency('weekly')}
-                    className={`flex-1 py-2 text-sm rounded-lg border ${
-                      frequency === 'weekly'
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    Toutes les sem.
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFrequency('biweekly')}
-                    className={`flex-1 py-2 text-sm rounded-lg border ${
-                      frequency === 'biweekly'
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    1 sem. sur 2
-                  </button>
+                  <button type="button" onClick={() => setFrequency('weekly')} className={`flex-1 py-2 text-sm rounded-lg border ${frequency === 'weekly' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'}`}>Toutes les sem.</button>
+                  <button type="button" onClick={() => setFrequency('biweekly')} className={`flex-1 py-2 text-sm rounded-lg border ${frequency === 'biweekly' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'}`}>1 sem. sur 2</button>
                 </div>
-                {frequency === 'biweekly' && !startDate && (
-                  <p className="text-[11px] text-amber-600 mt-1">
-                    💡 Ajoute une date de début pour caler la parité des semaines
-                  </p>
-                )}
               </div>
 
-              {/* Dates */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-600">
-                    Début <span className="text-slate-400">(opt.)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                  />
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Début <span className="text-slate-400">(opt.)</span></label>
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600">
-                    Fin <span className="text-slate-400">(opt.)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
-                  />
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Fin <span className="text-slate-400">(opt.)</span></label>
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-3 py-2 text-sm mt-1" />
                 </div>
               </div>
 
-              {/* Skip holidays */}
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={skipHolidays}
-                  onChange={(e) => setSkipHolidays(e.target.checked)}
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm text-slate-700">
-                  🏖️ Ne pas afficher pendant les vacances
-                </span>
+                <input type="checkbox" checked={skipHolidays} onChange={(e) => setSkipHolidays(e.target.checked)} className="w-4 h-4" />
+                <span className="text-sm dark:text-slate-200">🏖️ Ne pas afficher pendant les vacances</span>
               </label>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 bg-green-500 text-white rounded-lg py-2 text-sm hover:bg-green-600 disabled:opacity-50"
-                >
-                  {saving ? 'Enregistrement...' : '✓ Enregistrer'}
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="flex-1 bg-slate-100 text-slate-600 rounded-lg py-2 text-sm hover:bg-slate-200"
-                >
-                  Annuler
-                </button>
+                <button onClick={handleSave} disabled={saving} className="flex-1 bg-green-500 text-white rounded-lg py-2 text-sm hover:bg-green-600 disabled:opacity-50">{saving ? '...' : '✓ Enregistrer'}</button>
+                <button onClick={() => setEditing(false)} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg py-2 text-sm">Annuler</button>
               </div>
             </>
           )}
@@ -354,8 +219,8 @@ export default function SessionModal({ session, type, onClose }: Props) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center text-sm">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-800">{value}</span>
+      <span className="text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="font-medium dark:text-slate-100">{value}</span>
     </div>
   );
 }
