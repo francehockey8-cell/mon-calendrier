@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { getCourses, getSports, getHolidays, getNotes } from './actions';
 import CalendarView from './components/CalendarView';
 
