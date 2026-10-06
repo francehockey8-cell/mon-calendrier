@@ -2,6 +2,7 @@
 
 import { format, startOfWeek, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { isActiveOnDate } from '@/lib/recurrence';
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7);
 const HOUR_HEIGHT = 64;
@@ -24,15 +25,8 @@ export default function WeekView({
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const dow = (date: Date) => {
-    const d = date.getDay();
-    return d === 0 ? 7 : d;
-  };
-
-  const isHoliday = (date: Date) =>
-    holidays.some(
-      (h) => date >= new Date(h.startDate) && date <= new Date(h.endDate)
-    );
+  const isHolidayDay = (date: Date) =>
+    holidays.some((h) => date >= new Date(h.startDate) && date <= new Date(h.endDate));
 
   const timeToPx = (time: string) => {
     const [h, m] = time.split(':').map(Number);
@@ -51,7 +45,7 @@ export default function WeekView({
         {days.map((day) => (
           <div
             key={day.toISOString()}
-            className={`p-2 text-center border-l ${isHoliday(day) ? 'bg-amber-100' : ''}`}
+            className={`p-2 text-center border-l ${isHolidayDay(day) ? 'bg-amber-100' : ''}`}
           >
             <div className="text-xs text-slate-500 uppercase">
               {format(day, 'EEE', { locale: fr })}
@@ -79,12 +73,9 @@ export default function WeekView({
           </div>
 
           {days.map((day) => {
-            const holiday = isHoliday(day);
-            const d = dow(day);
-            const dayCourses = holiday
-              ? []
-              : courses.filter((c) => c.dayOfWeek === d);
-            const daySports = sports.filter((s) => s.dayOfWeek === d);
+            const holiday = isHolidayDay(day);
+            const dayCourses = courses.filter((c) => isActiveOnDate(c, day, holidays));
+            const daySports = sports.filter((s) => isActiveOnDate(s, day, holidays));
 
             return (
               <div

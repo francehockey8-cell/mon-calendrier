@@ -41,7 +41,21 @@
                   "kind": "scalar"
                 }
               },
+              "endDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
               "endTime": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "frequency": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -59,6 +73,20 @@
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "skipHolidays": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "startDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
                   "kind": "scalar"
                 }
               },
@@ -86,14 +114,26 @@
                 "dayOfWeek": {
                   "column": "dayOfWeek"
                 },
+                "endDate": {
+                  "column": "endDate"
+                },
                 "endTime": {
                   "column": "endTime"
+                },
+                "frequency": {
+                  "column": "frequency"
                 },
                 "id": {
                   "column": "id"
                 },
                 "location": {
                   "column": "location"
+                },
+                "skipHolidays": {
+                  "column": "skipHolidays"
+                },
+                "startDate": {
+                  "column": "startDate"
                 },
                 "startTime": {
                   "column": "startTime"
@@ -181,7 +221,7 @@
                 }
               },
               "date": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "kind": "scalar"
@@ -261,7 +301,21 @@
                   "kind": "scalar"
                 }
               },
+              "endDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
               "endTime": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "frequency": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -279,6 +333,20 @@
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "skipHolidays": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "startDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
                   "kind": "scalar"
                 }
               },
@@ -302,14 +370,26 @@
                 "dayOfWeek": {
                   "column": "dayOfWeek"
                 },
+                "endDate": {
+                  "column": "endDate"
+                },
                 "endTime": {
                   "column": "endTime"
+                },
+                "frequency": {
+                  "column": "frequency"
                 },
                 "id": {
                   "column": "id"
                 },
                 "location": {
                   "column": "location"
+                },
+                "skipHolidays": {
+                  "column": "skipHolidays"
+                },
+                "startDate": {
+                  "column": "startDate"
                 },
                 "startTime": {
                   "column": "startTime"
@@ -344,8 +424,22 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "endDate": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "endTime": {
                   "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "frequency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "weekly"
+                  },
                   "nativeType": "text",
                   "nullable": false
                 },
@@ -361,6 +455,20 @@
                 "location": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "skipHolidays": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "startDate": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
                   "nullable": true
                 },
                 "startTime": {
@@ -447,7 +555,7 @@
                 "date": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
-                  "nullable": false
+                  "nullable": true
                 },
                 "id": {
                   "codecId": "pg/int4@1",
@@ -503,8 +611,22 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "endDate": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "endTime": {
                   "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "frequency": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "weekly"
+                  },
                   "nativeType": "text",
                   "nullable": false
                 },
@@ -520,6 +642,20 @@
                 "location": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "skipHolidays": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "startDate": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
                   "nullable": true
                 },
                 "startTime": {
@@ -543,7 +679,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "49a56271f48bf140fb784aadf94ceb43d78f8939e7c7aa25061707aa9d1371be"
+    "storageHash": "9e2ab6e62a3285467ba1eb0beb7093c7e6f2a54cf59bd12094ef44dc8b02dd52"
   },
   "capabilities": {
     "postgres": {

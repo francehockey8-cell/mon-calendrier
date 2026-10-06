@@ -8,25 +8,21 @@ const globalForDb = globalThis as unknown as {
   connectPromise?: Promise<any>;
 };
 
+// Create the client with the URL included
 export const db = globalForDb.db ?? postgres({
   contractJson,
+  url: process.env.DATABASE_URL,
 });
 
 if (process.env.NODE_ENV !== 'production') globalForDb.db = db;
 
 export async function connectDB() {
   if (!globalForDb.connectPromise) {
-    const url = process.env.DATABASE_URL;
-    if (!url) {
-      throw new Error('DATABASE_URL manquante dans les variables d\'environnement');
-    }
-    globalForDb.connectPromise = (db as any)
-      .connect({ url })
-      .catch((e: any) => {
-        if (String(e?.message).includes('already connected')) return;
-        globalForDb.connectPromise = undefined;
-        throw e;
-      });
+    globalForDb.connectPromise = (db as any).connect().catch((e: any) => {
+      if (String(e?.message).includes('already connected')) return;
+      globalForDb.connectPromise = undefined;
+      throw e;
+    });
   }
   return globalForDb.connectPromise;
 }

@@ -6,6 +6,12 @@ import { updateSport, updateCourse, deleteSport, deleteCourse } from '../actions
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
+const COLORS = [
+  '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
+  '#6366f1', '#eab308', '#10b981', '#64748b',
+];
+
 type Props = {
   session: any;
   type: 'sport' | 'course';
@@ -20,6 +26,15 @@ export default function SessionModal({ session, type, onClose }: Props) {
   const [location, setLocation] = useState(session.location || '');
   const [title, setTitle] = useState(session.title || session.activity || '');
   const [dayOfWeek, setDayOfWeek] = useState(session.dayOfWeek);
+  const [color, setColor] = useState(session.color || '#3b82f6');
+  const [frequency, setFrequency] = useState(session.frequency || 'weekly');
+  const [startDate, setStartDate] = useState(
+    session.startDate ? new Date(session.startDate).toISOString().slice(0, 10) : ''
+  );
+  const [endDate, setEndDate] = useState(
+    session.endDate ? new Date(session.endDate).toISOString().slice(0, 10) : ''
+  );
+  const [skipHolidays, setSkipHolidays] = useState(!!session.skipHolidays);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,28 +42,25 @@ export default function SessionModal({ session, type, onClose }: Props) {
     setSaving(true);
     setError(null);
     try {
+      const payload: any = {
+        dayOfWeek,
+        startTime,
+        endTime,
+        location: location || null,
+        color,
+        frequency,
+        startDate: startDate || null,
+        endDate: endDate || null,
+        skipHolidays,
+      };
       if (type === 'sport') {
-        await updateSport(session.id, {
-          activity: title,
-          dayOfWeek,
-          startTime,
-          endTime,
-          location: location || null,
-        });
+        await updateSport(session.id, { ...payload, activity: title });
       } else {
-        await updateCourse(session.id, {
-          title,
-          dayOfWeek,
-          startTime,
-          endTime,
-          location: location || null,
-        });
+        await updateCourse(session.id, { ...payload, title });
       }
-      // Force le rafraîchissement des données serveur
       router.refresh();
       onClose();
     } catch (e: any) {
-      console.error('Erreur update:', e);
       setError(e?.message || 'Erreur inconnue');
     } finally {
       setSaving(false);
@@ -56,12 +68,7 @@ export default function SessionModal({ session, type, onClose }: Props) {
   };
 
   const handleDelete = async () => {
-    if (
-      !confirm(
-        'Supprimer cette séance pour TOUTES les semaines ? Cette action est définitive.'
-      )
-    )
-      return;
+    if (!confirm('Supprimer cette séance pour TOUTES les semaines ?')) return;
     try {
       if (type === 'sport') await deleteSport(session.id);
       else await deleteCourse(session.id);
@@ -81,6 +88,8 @@ export default function SessionModal({ session, type, onClose }: Props) {
     return `${h}h${m > 0 ? m.toString().padStart(2, '0') : ''}`;
   })();
 
+  const freqLabel = frequency === 'biweekly' ? '1 semaine sur 2' : 'Toutes les semaines';
+
   return (
     <div
       className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -94,8 +103,8 @@ export default function SessionModal({ session, type, onClose }: Props) {
         <div
           className="p-5 rounded-t-2xl"
           style={{
-            backgroundColor: (session.color || '#3b82f6') + '33',
-            borderTop: `4px solid ${session.color}`,
+            backgroundColor: color + '33',
+            borderTop: `4px solid ${color}`,
           }}
         >
           <div className="flex justify-between items-start">
@@ -117,12 +126,19 @@ export default function SessionModal({ session, type, onClose }: Props) {
         </div>
 
         {/* Bandeau récurrence */}
-        <div className="bg-blue-50 border-b border-blue-100 px-5 py-2 text-xs text-blue-800 flex items-center gap-2">
-          🔁 Séance récurrente — toutes les semaines le{' '}
-          <b>{JOURS[dayOfWeek - 1]}</b>
+        <div className="bg-blue-50 border-b border-blue-100 px-5 py-2 text-xs text-blue-800 flex flex-col gap-1">
+          <div>
+            🔁 <b>{freqLabel}</b> — le <b>{JOURS[dayOfWeek - 1]}</b>
+          </div>
+          {(startDate || endDate) && (
+            <div className="text-[11px]">
+              {startDate && <>Du {new Date(startDate).toLocaleDateString('fr-FR')}</>}
+              {endDate && <> au {new Date(endDate).toLocaleDateString('fr-FR')}</>}
+            </div>
+          )}
+          {skipHolidays && <div>🏖️ Masqué pendant les vacances</div>}
         </div>
 
-        {/* Contenu */}
         <div className="p-5 space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
@@ -136,7 +152,15 @@ export default function SessionModal({ session, type, onClose }: Props) {
                 <Row label="📅 Jour" value={JOURS[dayOfWeek - 1]} />
                 <Row label="🕐 Horaires" value={`${startTime} – ${endTime}`} />
                 <Row label="⏱️ Durée" value={duration} />
+                <Row label="🔁 Fréquence" value={freqLabel} />
                 {location && <Row label="📍 Lieu" value={location} />}
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-500">🎨 Couleur</span>
+                  <div
+                    className="w-6 h-6 rounded-full border border-slate-200"
+                    style={{ backgroundColor: color }}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -177,9 +201,7 @@ export default function SessionModal({ session, type, onClose }: Props) {
                   className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
                 >
                   {JOURS.map((j, i) => (
-                    <option key={j} value={i + 1}>
-                      {j}
-                    </option>
+                    <option key={j} value={i + 1}>{j}</option>
                   ))}
                 </select>
               </div>
@@ -214,6 +236,97 @@ export default function SessionModal({ session, type, onClose }: Props) {
                   className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
                 />
               </div>
+
+              {/* Sélecteur de couleur */}
+              <div>
+                <label className="text-xs font-medium text-slate-600">Couleur</label>
+                <div className="grid grid-cols-7 gap-2 mt-2">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={`w-8 h-8 rounded-full border-2 transition ${
+                        color === c ? 'border-slate-800 scale-110' : 'border-slate-200'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Fréquence */}
+              <div>
+                <label className="text-xs font-medium text-slate-600">Fréquence</label>
+                <div className="flex gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setFrequency('weekly')}
+                    className={`flex-1 py-2 text-sm rounded-lg border ${
+                      frequency === 'weekly'
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    Toutes les sem.
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFrequency('biweekly')}
+                    className={`flex-1 py-2 text-sm rounded-lg border ${
+                      frequency === 'biweekly'
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    1 sem. sur 2
+                  </button>
+                </div>
+                {frequency === 'biweekly' && !startDate && (
+                  <p className="text-[11px] text-amber-600 mt-1">
+                    💡 Ajoute une date de début pour caler la parité des semaines
+                  </p>
+                )}
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600">
+                    Début <span className="text-slate-400">(opt.)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">
+                    Fin <span className="text-slate-400">(opt.)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-sm mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Skip holidays */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={skipHolidays}
+                  onChange={(e) => setSkipHolidays(e.target.checked)}
+                  className="w-4 h-4 rounded"
+                />
+                <span className="text-sm text-slate-700">
+                  🏖️ Ne pas afficher pendant les vacances
+                </span>
+              </label>
 
               <div className="flex gap-2 pt-2">
                 <button

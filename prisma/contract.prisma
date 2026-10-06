@@ -1,23 +1,31 @@
 // use prisma-8
 
 model Course {
-  id         Int    @id @default(autoincrement())
-  title      String
-  dayOfWeek  Int
-  startTime  String
-  endTime    String
-  location   String?
-  color      String @default("#3b82f6")
+  id           Int       @id @default(autoincrement())
+  title        String
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  location     String?
+  color        String    @default("#3b82f6")
+  frequency    String    @default("weekly")
+  startDate    DateTime?
+  endDate      DateTime?
+  skipHolidays Boolean   @default(false)
 }
 
 model SportSession {
-  id         Int    @id @default(autoincrement())
-  activity   String
-  dayOfWeek  Int
-  startTime  String
-  endTime    String
-  location   String?
-  color      String @default("#ef4444")
+  id           Int       @id @default(autoincrement())
+  activity     String
+  dayOfWeek    Int
+  startTime    String
+  endTime      String
+  location     String?
+  color        String    @default("#ef4444")
+  frequency    String    @default("weekly")
+  startDate    DateTime?
+  endDate      DateTime?
+  skipHolidays Boolean   @default(false)
 }
 
 model Holiday {
@@ -28,11 +36,11 @@ model Holiday {
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
-  date      DateTime
+  id        Int        @id @default(autoincrement())
+  date      DateTime?
   title     String
   content   String?
-  type      String   @default("note")
-  color     String   @default("#8b5cf6")
-  createdAt DateTime @default(now())
+  type      String     @default("note")
+  color     String     @default("#8b5cf6")
+  createdAt DateTime   @default(now())
 }

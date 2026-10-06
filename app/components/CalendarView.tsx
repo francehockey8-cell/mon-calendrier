@@ -25,8 +25,14 @@ import {
 import WeekView from './WeekView';
 import DayView from './DayView';
 import SessionModal from './SessionModal';
+import { isActiveOnDate } from '@/lib/recurrence';
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+const COLORS = [
+  '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
+];
 
 type Props = {
   courses: any[];
@@ -70,27 +76,19 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
     if (view === 'week') {
       const ws = startOfWeek(currentDate, { weekStartsOn: 1 });
       const we = addDays(ws, 6);
-      return `Semaine du ${format(ws, 'd MMM', { locale: fr })} au ${format(
-        we,
-        'd MMM yyyy',
-        { locale: fr }
-      )}`;
+      return `Semaine du ${format(ws, 'd MMM', { locale: fr })} au ${format(we, 'd MMM yyyy', { locale: fr })}`;
     }
     return format(currentDate, 'EEEE d MMMM yyyy', { locale: fr });
   })();
 
-  // --- Helpers ---
-  const isHoliday = (date: Date) =>
+  const isHolidayDay = (date: Date) =>
     holidays.some((h) =>
       isWithinInterval(date, {
         start: new Date(h.startDate),
         end: new Date(h.endDate),
       })
     );
-  const dow = (date: Date) => {
-    const d = date.getDay();
-    return d === 0 ? 7 : d;
-  };
+
   const notesOfDay = (date: Date) =>
     notes.filter((n) => n.date && isSameDay(new Date(n.date), date));
 
@@ -106,24 +104,22 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
       <div className="bg-white rounded-2xl shadow-sm p-4">
         <div className="grid grid-cols-7 gap-2 mb-2">
           {JOURS.map((j) => (
-            <div
-              key={j}
-              className="text-center text-sm font-medium text-slate-500"
-            >
+            <div key={j} className="text-center text-sm font-medium text-slate-500">
               {j}
             </div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: (dow(monthStart) + 6) % 7 }).map((_, i) => (
+          {Array.from({
+            length: ((monthStart.getDay() === 0 ? 7 : monthStart.getDay()) + 6) % 7,
+          }).map((_, i) => (
             <div key={`empty-${i}`} />
           ))}
           {daysInMonth.map((day) => {
-            const holiday = isHoliday(day);
+            const holiday = isHolidayDay(day);
             const dayNotes = notesOfDay(day);
-            const hasCourse =
-              !holiday && courses.some((c) => c.dayOfWeek === dow(day));
-            const hasSport = sports.some((s) => s.dayOfWeek === dow(day));
+            const hasCourse = courses.some((c) => isActiveOnDate(c, day, holidays));
+            const hasSport = sports.some((s) => isActiveOnDate(s, day, holidays));
             const isSelected = selectedDay && isSameDay(day, selectedDay);
             return (
               <button
@@ -140,12 +136,8 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
               >
                 <div className="font-medium text-slate-700">{format(day, 'd')}</div>
                 <div className="flex gap-1 mt-auto flex-wrap">
-                  {hasCourse && (
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  )}
-                  {hasSport && (
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                  )}
+                  {hasCourse && <span className="w-2 h-2 rounded-full bg-blue-500" />}
+                  {hasSport && <span className="w-2 h-2 rounded-full bg-red-500" />}
                   {dayNotes.map((n: any) => (
                     <span
                       key={n.id}
@@ -167,12 +159,11 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
 
   // --- Panneau latéral ---
   const renderSidePanel = () => {
-    const dayCourses =
-      selectedDay && !isHoliday(selectedDay)
-        ? courses.filter((c) => c.dayOfWeek === dow(selectedDay))
-        : [];
+    const dayCourses = selectedDay
+      ? courses.filter((c) => isActiveOnDate(c, selectedDay, holidays))
+      : [];
     const daySports = selectedDay
-      ? sports.filter((s) => s.dayOfWeek === dow(selectedDay))
+      ? sports.filter((s) => isActiveOnDate(s, selectedDay, holidays))
       : [];
     const dayNotes = selectedDay ? notesOfDay(selectedDay) : [];
 
@@ -212,119 +203,20 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
           </button>
         </div>
 
-        {/* Formulaire Cours */}
-        {showCourseForm && (
-          <form
-            action={addCourse}
-            className="bg-white rounded-2xl shadow-sm p-4 space-y-2"
-          >
-            <input
-              name="title"
-              placeholder="Matière"
-              required
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
-            <select
-              name="dayOfWeek"
-              required
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            >
-              {JOURS.map((j, i) => (
-                <option key={j} value={i + 1}>
-                  {j}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2">
-              <input
-                name="startTime"
-                type="time"
-                required
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-              <input
-                name="endTime"
-                type="time"
-                required
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            </div>
-            <input
-              name="location"
-              placeholder="Salle"
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
-            <button className="w-full bg-blue-500 text-white rounded-lg py-2 text-sm">
-              Enregistrer
-            </button>
-          </form>
-        )}
-
-        {/* Formulaire Sport */}
-        {showSportForm && (
-          <form
-            action={addSport}
-            className="bg-white rounded-2xl shadow-sm p-4 space-y-2"
-          >
-            <input
-              name="activity"
-              placeholder="Activité"
-              required
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
-            <select
-              name="dayOfWeek"
-              required
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            >
-              {JOURS.map((j, i) => (
-                <option key={j} value={i + 1}>
-                  {j}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2">
-              <input
-                name="startTime"
-                type="time"
-                required
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-              <input
-                name="endTime"
-                type="time"
-                required
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            </div>
-            <input
-              name="location"
-              placeholder="Lieu"
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
-            <button className="w-full bg-red-500 text-white rounded-lg py-2 text-sm">
-              Enregistrer
-            </button>
-          </form>
-        )}
+        {/* Formulaires Cours et Sport via composant réutilisable */}
+        {showCourseForm && <AddCourseForm onClose={() => setShowCourseForm(false)} />}
+        {showSportForm && <AddSportForm onClose={() => setShowSportForm(false)} />}
 
         {/* Formulaire Note */}
         {showNoteForm && (
-          <form
-            action={addNote}
-            className="bg-white rounded-2xl shadow-sm p-4 space-y-2"
-          >
+          <form action={addNote} className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
             <input
               name="title"
               placeholder="Titre"
               required
               className="w-full border rounded-lg px-3 py-2 text-sm"
             />
-            <input
-              name="date"
-              type="date"
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
+            <input name="date" type="date" className="w-full border rounded-lg px-3 py-2 text-sm" />
             <div className="text-xs text-slate-400 -mt-1">
               Laisse vide pour une note libre 📌
             </div>
@@ -333,10 +225,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
               placeholder="Contenu"
               className="w-full border rounded-lg px-3 py-2 text-sm"
             />
-            <select
-              name="type"
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            >
+            <select name="type" className="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="note">Note</option>
               <option value="event">Événement</option>
             </select>
@@ -353,9 +242,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
             className="w-full flex justify-between items-center font-semibold mb-2"
           >
             <span>📌 Notes libres ({freeNotes.length})</span>
-            <span className="text-slate-400 text-sm">
-              {showFreeNotes ? '−' : '+'}
-            </span>
+            <span className="text-slate-400 text-sm">{showFreeNotes ? '−' : '+'}</span>
           </button>
           {showFreeNotes && (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -386,14 +273,12 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
           )}
         </div>
 
-        {/* Détail du jour sélectionné (vue Mois) */}
+        {/* Détail du jour (vue Mois) */}
         {view === 'month' && (
           <div className="bg-white rounded-2xl shadow-sm p-4">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold capitalize text-sm">
-                {selectedDay
-                  ? format(selectedDay, 'EEEE d MMMM', { locale: fr })
-                  : ''}
+                {selectedDay ? format(selectedDay, 'EEEE d MMMM', { locale: fr }) : ''}
               </h3>
               {selectedDay && (
                 <button
@@ -407,7 +292,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
                 </button>
               )}
             </div>
-            {selectedDay && isHoliday(selectedDay) && (
+            {selectedDay && isHolidayDay(selectedDay) && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2 text-xs text-amber-800">
                 🏖️ Vacances
               </div>
@@ -420,9 +305,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
             {dayCourses.map((c: any) => (
               <button
                 key={c.id}
-                onClick={() =>
-                  setSelectedSession({ session: c, type: 'course' })
-                }
+                onClick={() => setSelectedSession({ session: c, type: 'course' })}
                 className="w-full text-left border-l-4 pl-2 py-1 mb-1 text-xs hover:bg-slate-50 rounded"
                 style={{ borderColor: c.color }}
               >
@@ -432,9 +315,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
             {daySports.map((s: any) => (
               <button
                 key={s.id}
-                onClick={() =>
-                  setSelectedSession({ session: s, type: 'sport' })
-                }
+                onClick={() => setSelectedSession({ session: s, type: 'sport' })}
                 className="w-full text-left border-l-4 pl-2 py-1 mb-1 text-xs hover:bg-slate-50 rounded"
                 style={{ borderColor: s.color }}
               >
@@ -447,9 +328,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
                 className="border-l-4 pl-2 py-1 mb-1 flex justify-between text-xs"
                 style={{ borderColor: n.color }}
               >
-                <span>
-                  📝 <b>{n.title}</b>
-                </span>
+                <span>📝 <b>{n.title}</b></span>
                 <button
                   onClick={() => deleteNote(n.id)}
                   className="text-slate-400 hover:text-red-500"
@@ -466,7 +345,6 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
 
   return (
     <div className="space-y-4">
-      {/* Barre d'outils */}
       <div className="bg-white rounded-2xl shadow-sm p-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
           {(['month', 'week', 'day'] as const).map((v) => (
@@ -485,19 +363,13 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={goPrev}
-            className="px-3 py-1.5 rounded-lg hover:bg-slate-100"
-          >
+          <button onClick={goPrev} className="px-3 py-1.5 rounded-lg hover:bg-slate-100">
             ←
           </button>
           <h2 className="text-lg font-semibold capitalize min-w-[200px] text-center">
             {title}
           </h2>
-          <button
-            onClick={goNext}
-            className="px-3 py-1.5 rounded-lg hover:bg-slate-100"
-          >
+          <button onClick={goNext} className="px-3 py-1.5 rounded-lg hover:bg-slate-100">
             →
           </button>
           <button
@@ -509,7 +381,6 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
         </div>
       </div>
 
-      {/* Contenu */}
       <div className="grid lg:grid-cols-[1fr_360px] gap-6">
         <div>
           {view === 'month' && renderMonth()}
@@ -519,9 +390,7 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
               courses={courses}
               sports={sports}
               holidays={holidays}
-              onSelectSession={(session, type) =>
-                setSelectedSession({ session, type })
-              }
+              onSelectSession={(session, type) => setSelectedSession({ session, type })}
             />
           )}
           {view === 'day' && (
@@ -531,16 +400,13 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
               sports={sports}
               holidays={holidays}
               notes={notes}
-              onSelectSession={(session, type) =>
-                setSelectedSession({ session, type })
-              }
+              onSelectSession={(session, type) => setSelectedSession({ session, type })}
             />
           )}
         </div>
         {renderSidePanel()}
       </div>
 
-      {/* Modal de détail / édition */}
       {selectedSession && (
         <SessionModal
           session={selectedSession.session}
@@ -549,5 +415,187 @@ export default function CalendarView({ courses, sports, holidays, notes }: Props
         />
       )}
     </div>
+  );
+}
+
+// ===== Sous-composants pour les formulaires d'ajout =====
+
+function AddCourseForm({ onClose }: { onClose: () => void }) {
+  const [color, setColor] = useState('#3b82f6');
+  const [frequency, setFrequency] = useState('weekly');
+  const [skipHolidays, setSkipHolidays] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    try {
+      await addCourse({
+        title: fd.get('title') as string,
+        dayOfWeek: parseInt(fd.get('dayOfWeek') as string),
+        startTime: fd.get('startTime') as string,
+        endTime: fd.get('endTime') as string,
+        location: (fd.get('location') as string) || null,
+        color,
+        frequency,
+        startDate: (fd.get('startDate') as string) || null,
+        endDate: (fd.get('endDate') as string) || null,
+        skipHolidays,
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
+      <input name="title" placeholder="Matière" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+      <select name="dayOfWeek" required className="w-full border rounded-lg px-3 py-2 text-sm">
+        {JOURS.map((j, i) => <option key={j} value={i + 1}>{j}</option>)}
+      </select>
+      <div className="flex gap-2">
+        <input name="startTime" type="time" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+        <input name="endTime" type="time" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <input name="location" placeholder="Salle" className="w-full border rounded-lg px-3 py-2 text-sm" />
+
+      <div>
+        <label className="text-xs text-slate-500">Couleur</label>
+        <div className="flex gap-1 mt-1 flex-wrap">
+          {COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              className={`w-6 h-6 rounded-full border-2 ${color === c ? 'border-slate-800' : 'border-transparent'}`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setFrequency('weekly')}
+          className={`flex-1 py-1.5 text-xs rounded-lg border ${frequency === 'weekly' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-slate-200'}`}
+        >
+          Toutes les sem.
+        </button>
+        <button
+          type="button"
+          onClick={() => setFrequency('biweekly')}
+          className={`flex-1 py-1.5 text-xs rounded-lg border ${frequency === 'biweekly' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-slate-200'}`}
+        >
+          1 sem. sur 2
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <input name="startDate" type="date" className="border rounded-lg px-3 py-2 text-sm" />
+        <input name="endDate" type="date" className="border rounded-lg px-3 py-2 text-sm" />
+      </div>
+
+      <label className="flex items-center gap-2 text-xs">
+        <input type="checkbox" checked={skipHolidays} onChange={(e) => setSkipHolidays(e.target.checked)} className="w-4 h-4" />
+        🏖️ Pas pendant les vacances
+      </label>
+
+      <button disabled={saving} className="w-full bg-blue-500 text-white rounded-lg py-2 text-sm disabled:opacity-50">
+        {saving ? '...' : 'Enregistrer'}
+      </button>
+    </form>
+  );
+}
+
+function AddSportForm({ onClose }: { onClose: () => void }) {
+  const [color, setColor] = useState('#ef4444');
+  const [frequency, setFrequency] = useState('weekly');
+  const [skipHolidays, setSkipHolidays] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    try {
+      await addSport({
+        activity: fd.get('activity') as string,
+        dayOfWeek: parseInt(fd.get('dayOfWeek') as string),
+        startTime: fd.get('startTime') as string,
+        endTime: fd.get('endTime') as string,
+        location: (fd.get('location') as string) || null,
+        color,
+        frequency,
+        startDate: (fd.get('startDate') as string) || null,
+        endDate: (fd.get('endDate') as string) || null,
+        skipHolidays,
+      });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-4 space-y-2">
+      <input name="activity" placeholder="Activité" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+      <select name="dayOfWeek" required className="w-full border rounded-lg px-3 py-2 text-sm">
+        {JOURS.map((j, i) => <option key={j} value={i + 1}>{j}</option>)}
+      </select>
+      <div className="flex gap-2">
+        <input name="startTime" type="time" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+        <input name="endTime" type="time" required className="w-full border rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <input name="location" placeholder="Lieu" className="w-full border rounded-lg px-3 py-2 text-sm" />
+
+      <div>
+        <label className="text-xs text-slate-500">Couleur</label>
+        <div className="flex gap-1 mt-1 flex-wrap">
+          {COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              className={`w-6 h-6 rounded-full border-2 ${color === c ? 'border-slate-800' : 'border-transparent'}`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setFrequency('weekly')}
+          className={`flex-1 py-1.5 text-xs rounded-lg border ${frequency === 'weekly' ? 'bg-red-500 text-white border-red-500' : 'bg-white border-slate-200'}`}
+        >
+          Toutes les sem.
+        </button>
+        <button
+          type="button"
+          onClick={() => setFrequency('biweekly')}
+          className={`flex-1 py-1.5 text-xs rounded-lg border ${frequency === 'biweekly' ? 'bg-red-500 text-white border-red-500' : 'bg-white border-slate-200'}`}
+        >
+          1 sem. sur 2
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <input name="startDate" type="date" className="border rounded-lg px-3 py-2 text-sm" />
+        <input name="endDate" type="date" className="border rounded-lg px-3 py-2 text-sm" />
+      </div>
+
+      <label className="flex items-center gap-2 text-xs">
+        <input type="checkbox" checked={skipHolidays} onChange={(e) => setSkipHolidays(e.target.checked)} className="w-4 h-4" />
+        🏖️ Pas pendant les vacances
+      </label>
+
+      <button disabled={saving} className="w-full bg-red-500 text-white rounded-lg py-2 text-sm disabled:opacity-50">
+        {saving ? '...' : 'Enregistrer'}
+      </button>
+    </form>
   );
 }

@@ -3,14 +3,9 @@
 import { db, connectDB } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
-// Helper pour convertir une string de date en Temporal.Instant
-// sans que TypeScript râle (le polyfill est chargé via layout.tsx)
 function dateToTemporal(dateStr: string): any {
   const d = new Date(dateStr) as any;
-  if (typeof d.toTemporalInstant === 'function') {
-    return d.toTemporalInstant();
-  }
-  // Fallback : objet avec toString ISO
+  if (typeof d.toTemporalInstant === 'function') return d.toTemporalInstant();
   return d;
 }
 
@@ -50,28 +45,58 @@ export async function addNote(formData: FormData) {
   revalidatePath('/', 'layout');
 }
 
-export async function addCourse(formData: FormData) {
+export async function addCourse(data: {
+  title: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  location?: string | null;
+  color?: string;
+  frequency?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  skipHolidays?: boolean;
+}) {
   await connectDB();
   await db.orm.public.Course.create({
-    title: formData.get('title') as string,
-    dayOfWeek: parseInt(formData.get('dayOfWeek') as string),
-    startTime: formData.get('startTime') as string,
-    endTime: formData.get('endTime') as string,
-    location: (formData.get('location') as string) || null,
-    color: (formData.get('color') as string) || '#3b82f6',
+    title: data.title,
+    dayOfWeek: data.dayOfWeek,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    location: data.location || null,
+    color: data.color || '#3b82f6',
+    frequency: data.frequency || 'weekly',
+    startDate: data.startDate ? dateToTemporal(data.startDate) : null,
+    endDate: data.endDate ? dateToTemporal(data.endDate) : null,
+    skipHolidays: data.skipHolidays || false,
   });
   revalidatePath('/', 'layout');
 }
 
-export async function addSport(formData: FormData) {
+export async function addSport(data: {
+  activity: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  location?: string | null;
+  color?: string;
+  frequency?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  skipHolidays?: boolean;
+}) {
   await connectDB();
   await db.orm.public.SportSession.create({
-    activity: formData.get('activity') as string,
-    dayOfWeek: parseInt(formData.get('dayOfWeek') as string),
-    startTime: formData.get('startTime') as string,
-    endTime: formData.get('endTime') as string,
-    location: (formData.get('location') as string) || null,
-    color: (formData.get('color') as string) || '#ef4444',
+    activity: data.activity,
+    dayOfWeek: data.dayOfWeek,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    location: data.location || null,
+    color: data.color || '#ef4444',
+    frequency: data.frequency || 'weekly',
+    startDate: data.startDate ? dateToTemporal(data.startDate) : null,
+    endDate: data.endDate ? dateToTemporal(data.endDate) : null,
+    skipHolidays: data.skipHolidays || false,
   });
   revalidatePath('/', 'layout');
 }
@@ -95,36 +120,26 @@ export async function deleteSport(id: number) {
   revalidatePath('/', 'layout');
 }
 
-// ===== MODIFICATION (robuste, essaie plusieurs syntaxes Prisma 8) =====
+// ===== MODIFICATION =====
 async function safeUpdate(collection: any, id: number, data: any) {
   if (typeof collection.update === 'function') {
     try {
       return await collection.update({ id, ...data });
-    } catch {
-      /* try next */
-    }
+    } catch {}
   }
-
   if (typeof collection.update === 'function') {
     try {
       return await collection.update({ where: { id }, data });
-    } catch {
-      /* try next */
-    }
+    } catch {}
   }
-
   if (typeof collection.where === 'function') {
     const q = collection.where({ id });
-    if (q && typeof q.update === 'function') {
-      return await q.update(data);
-    }
+    if (q && typeof q.update === 'function') return await q.update(data);
   }
-
   if (typeof collection.updateOne === 'function') {
     return await collection.updateOne({ id, ...data });
   }
-
-  throw new Error('Aucune méthode de mise à jour disponible sur ce modèle');
+  throw new Error('Aucune méthode de mise à jour disponible');
 }
 
 export async function updateSport(id: number, data: {
@@ -133,9 +148,21 @@ export async function updateSport(id: number, data: {
   startTime?: string;
   endTime?: string;
   location?: string | null;
+  color?: string;
+  frequency?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  skipHolidays?: boolean;
 }) {
   await connectDB();
-  await safeUpdate(db.orm.public.SportSession, id, data);
+  const payload: any = { ...data };
+  if (data.startDate !== undefined) {
+    payload.startDate = data.startDate ? dateToTemporal(data.startDate) : null;
+  }
+  if (data.endDate !== undefined) {
+    payload.endDate = data.endDate ? dateToTemporal(data.endDate) : null;
+  }
+  await safeUpdate(db.orm.public.SportSession, id, payload);
   revalidatePath('/', 'layout');
 }
 
@@ -145,8 +172,20 @@ export async function updateCourse(id: number, data: {
   startTime?: string;
   endTime?: string;
   location?: string | null;
+  color?: string;
+  frequency?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  skipHolidays?: boolean;
 }) {
   await connectDB();
-  await safeUpdate(db.orm.public.Course, id, data);
+  const payload: any = { ...data };
+  if (data.startDate !== undefined) {
+    payload.startDate = data.startDate ? dateToTemporal(data.startDate) : null;
+  }
+  if (data.endDate !== undefined) {
+    payload.endDate = data.endDate ? dateToTemporal(data.endDate) : null;
+  }
+  await safeUpdate(db.orm.public.Course, id, payload);
   revalidatePath('/', 'layout');
 }

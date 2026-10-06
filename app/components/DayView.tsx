@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { isActiveOnDate } from '@/lib/recurrence';
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7);
 const HOUR_HEIGHT = 70;
@@ -23,18 +24,12 @@ export default function DayView({
   notes,
   onSelectSession,
 }: Props) {
-  const dow = (date: Date) => {
-    const d = date.getDay();
-    return d === 0 ? 7 : d;
-  };
-
   const holiday = holidays.some(
     (h) => currentDate >= new Date(h.startDate) && currentDate <= new Date(h.endDate)
   );
 
-  const d = dow(currentDate);
-  const dayCourses = holiday ? [] : courses.filter((c) => c.dayOfWeek === d);
-  const daySports = sports.filter((s) => s.dayOfWeek === d);
+  const dayCourses = courses.filter((c) => isActiveOnDate(c, currentDate, holidays));
+  const daySports = sports.filter((s) => isActiveOnDate(s, currentDate, holidays));
   const dayNotes = notes.filter(
     (n) => n.date && new Date(n.date).toDateString() === currentDate.toDateString()
   );
