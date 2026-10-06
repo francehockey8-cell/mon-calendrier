@@ -3,6 +3,17 @@
 import { db, connectDB } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
+// Helper pour convertir une string de date en Temporal.Instant
+// sans que TypeScript râle (le polyfill est chargé via layout.tsx)
+function dateToTemporal(dateStr: string): any {
+  const d = new Date(dateStr) as any;
+  if (typeof d.toTemporalInstant === 'function') {
+    return d.toTemporalInstant();
+  }
+  // Fallback : objet avec toString ISO
+  return d;
+}
+
 // ===== LECTURE =====
 export async function getCourses() {
   await connectDB();
@@ -28,7 +39,7 @@ export async function getNotes() {
 export async function addNote(formData: FormData) {
   await connectDB();
   const dateStr = formData.get('date') as string;
-  const date = dateStr ? new Date(dateStr).toTemporalInstant() : null;
+  const date = dateStr ? dateToTemporal(dateStr) : null;
   await db.orm.public.Note.create({
     date,
     title: formData.get('title') as string,
@@ -86,33 +97,29 @@ export async function deleteSport(id: number) {
 
 // ===== MODIFICATION (robuste, essaie plusieurs syntaxes Prisma 8) =====
 async function safeUpdate(collection: any, id: number, data: any) {
-  // Syntaxe 1 : update({ id, ...data })
   if (typeof collection.update === 'function') {
     try {
       return await collection.update({ id, ...data });
-    } catch (e1: any) {
-      console.log('update({id,...}) échoué, essai autre syntaxe...', e1?.message);
+    } catch {
+      /* try next */
     }
   }
 
-  // Syntaxe 2 : update({ where: { id }, data })
   if (typeof collection.update === 'function') {
     try {
       return await collection.update({ where: { id }, data });
-    } catch (e2: any) {
-      console.log('update({where,data}) échoué...', e2?.message);
+    } catch {
+      /* try next */
     }
   }
 
-  // Syntaxe 3 : where({ id }).update(data)
   if (typeof collection.where === 'function') {
     const q = collection.where({ id });
-    if (typeof q.update === 'function') {
+    if (q && typeof q.update === 'function') {
       return await q.update(data);
     }
   }
 
-  // Syntaxe 4 : updateOne({ id, ...data })
   if (typeof collection.updateOne === 'function') {
     return await collection.updateOne({ id, ...data });
   }
