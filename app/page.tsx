@@ -13,6 +13,9 @@ import Countdown from './components/Countdown';
 import Weather from './components/Weather';
 import ThemeToggle from './components/ThemeToggle';
 import Suggestions from './components/Suggestions';
+import Diag from './components/Diag';
+import HydrationFallback from './components/HydrationFallback';
+
 
 export default async function Home() {
   await connection();
@@ -22,6 +25,8 @@ export default async function Home() {
   if (!user.isOwner) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-900">
+        <Diag />
+        <HydrationFallback />
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 max-w-sm text-center space-y-3">
           <div className="text-5xl">🔒</div>
           <h1 className="text-xl font-bold dark:text-slate-100">Accès non autorisé</h1>
