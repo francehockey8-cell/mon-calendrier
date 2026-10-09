@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isActiveOnDate } from '@/lib/recurrence';
 import { addDays } from 'date-fns';
 
@@ -13,7 +13,14 @@ export default function Suggestions({
   sports: any[];
   holidays: any[];
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const suggestions = useMemo(() => {
+    if (!mounted) return [];
     const out: any[] = [];
     for (let i = 1; i <= 7; i++) {
       const day = addDays(new Date(), i);
@@ -23,10 +30,9 @@ export default function Suggestions({
         a.startTime.localeCompare(b.startTime)
       );
 
-      // Chercher un gap de 45min+ entre 15h et 21h
       const events = [
         ...busy.map((b) => ({ s: timeToMin(b.startTime), e: timeToMin(b.endTime) })),
-        { s: timeToMin('22:00'), e: timeToMin('22:00') }, // borne fin
+        { s: timeToMin('22:00'), e: timeToMin('22:00') },
       ];
       let cursor = timeToMin('15:00');
       for (const ev of events) {
@@ -43,7 +49,13 @@ export default function Suggestions({
       }
     }
     return out.slice(0, 3);
-  }, [courses, sports, holidays]);
+  }, [courses, sports, holidays, mounted]);
+
+  if (!mounted) {
+    return (
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl shadow-sm p-4 border border-purple-100 dark:border-purple-800 h-24" />
+    );
+  }
 
   if (suggestions.length === 0) return null;
 
@@ -57,9 +69,15 @@ export default function Suggestions({
       </div>
       <div className="space-y-1.5">
         {suggestions.map((s, i) => (
-          <div key={i} className="text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2">
-            <span className="font-medium">
-              {s.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })}
+          <div
+            key={i}
+            className="text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2"
+          >
+            <span className="font-medium capitalize">
+              {s.date.toLocaleDateString('fr-FR', {
+                weekday: 'short',
+                day: 'numeric',
+              })}
             </span>
             <span className="text-slate-400">
               {s.from} – {s.to}

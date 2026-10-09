@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { isActiveOnDate } from '@/lib/recurrence';
 
 export default function TodayCard({
@@ -11,6 +12,22 @@ export default function TodayCard({
   sports: any[];
   holidays: any[];
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Avant hydratation : squelette neutre (identique côté serveur et client)
+  if (!mounted) {
+    return (
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5">
+        <div className="h-6 w-40 bg-slate-100 dark:bg-slate-700 rounded mb-3" />
+        <div className="h-4 w-32 bg-slate-100 dark:bg-slate-700 rounded" />
+      </div>
+    );
+  }
+
   const today = new Date();
   const todayCourses = courses.filter((c) => isActiveOnDate(c, today, holidays));
   const todaySports = sports.filter((s) => isActiveOnDate(s, today, holidays));
@@ -20,15 +37,23 @@ export default function TodayCard({
     ...todaySports.map((s) => ({ ...s, _kind: 'sport', _label: s.activity })),
   ].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  const nowTime = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+  const nowTime = `${String(today.getHours()).padStart(2, '0')}:${String(
+    today.getMinutes()
+  ).padStart(2, '0')}`;
   const nextIdx = all.findIndex((e) => e.startTime >= nowTime);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 md:p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold dark:text-slate-100">📌 Aujourd'hui</h2>
+        <h2 className="text-base md:text-lg font-bold dark:text-slate-100">
+          📌 Aujourd'hui
+        </h2>
         <span className="text-xs text-slate-400 capitalize">
-          {today.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {today.toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })}
         </span>
       </div>
 
@@ -44,9 +69,9 @@ export default function TodayCard({
           return (
             <div
               key={i}
-              className={`flex items-center gap-3 p-2 rounded-lg transition ${
+              className={`flex items-center gap-3 p-2 rounded-xl transition ${
                 isNow
-                  ? 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-300'
+                  ? 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-300 dark:ring-blue-700'
                   : isNext
                   ? 'bg-amber-50 dark:bg-amber-900/20'
                   : ''

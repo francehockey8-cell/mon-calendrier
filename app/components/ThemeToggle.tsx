@@ -18,7 +18,6 @@ export default function ThemeToggle() {
     localStorage.setItem('theme', next ? 'dark' : 'light');
   };
 
-  // Avant hydratation, on rend un bouton vide pour éviter le flash
   if (!mounted) {
     return (
       <button className="w-11 h-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
