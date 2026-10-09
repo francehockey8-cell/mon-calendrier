@@ -1,3 +1,4 @@
+import { connection } from 'next/server';
 import { signupAction } from '../actions';
 import { db, connectDB } from '@/lib/db';
 import { redirect } from 'next/navigation';
@@ -13,6 +14,7 @@ export default async function SignupPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  await connection();
   await connectDB();
   const users = await db.orm.public.User.all();
   if (users.length > 0) redirect('/login');
