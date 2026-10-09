@@ -5,7 +5,6 @@ import TodayCard from './components/TodayCard';
 import Countdown from './components/Countdown';
 import Weather from './components/Weather';
 import ThemeToggle from './components/ThemeToggle';
-import Search from './components/Search';
 import Suggestions from './components/Suggestions';
 
 export default async function Home() {
@@ -23,7 +22,9 @@ export default async function Home() {
             Ce calendrier appartient au compte propriétaire.
           </p>
           <form action={logoutAction}>
-            <button className="w-full bg-slate-500 text-white rounded-lg py-2 text-sm">Se déconnecter</button>
+            <button className="w-full bg-slate-500 text-white rounded-lg py-2 text-sm">
+              Se déconnecter
+            </button>
           </form>
         </div>
       </main>
@@ -31,17 +32,26 @@ export default async function Home() {
   }
 
   const [courses, sports, holidays, notes] = await Promise.all([
-    getCourses(), getSports(), getHolidays(), getNotes(),
+    getCourses(),
+    getSports(),
+    getHolidays(),
+    getNotes(),
   ]);
 
   const serialize = (obj: any) => {
     const result: any = {};
     for (const key of Object.keys(obj)) {
       const val = obj[key];
-      if (val === null || val === undefined) { result[key] = null; continue; }
+      if (val === null || val === undefined) {
+        result[key] = null;
+        continue;
+      }
       if (typeof val === 'object' && typeof val.toString === 'function') {
         const str = val.toString();
-        if (str.match(/^\d{4}-\d{2}-\d{2}T/)) { result[key] = str; continue; }
+        if (str.match(/^\d{4}-\d{2}-\d{2}T/)) {
+          result[key] = str;
+          continue;
+        }
       }
       result[key] = val;
     }
@@ -59,7 +69,9 @@ export default async function Home() {
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold dark:text-slate-100">📅 Mon Calendrier</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">Salut {user.email} 👋</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+              Salut {user.email} 👋
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Weather />
@@ -77,12 +89,7 @@ export default async function Home() {
         </div>
 
         <div className="grid lg:grid-cols-[1fr_360px] gap-6 mb-6">
-          <TodayCard
-            courses={sCourses}
-            sports={sSports}
-            holidays={sHolidays}
-            onSelectSession={() => {}}
-          />
+          <TodayCard courses={sCourses} sports={sSports} holidays={sHolidays} />
           <Suggestions courses={sCourses} sports={sSports} holidays={sHolidays} />
         </div>
 

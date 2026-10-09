@@ -6,12 +6,10 @@ export default function TodayCard({
   courses,
   sports,
   holidays,
-  onSelectSession,
 }: {
   courses: any[];
   sports: any[];
   holidays: any[];
-  onSelectSession: (s: any, t: 'sport' | 'course') => void;
 }) {
   const today = new Date();
   const todayCourses = courses.filter((c) => isActiveOnDate(c, today, holidays));
@@ -44,15 +42,14 @@ export default function TodayCard({
           const isNow = e.startTime <= nowTime && e.endTime >= nowTime;
           const done = e.endTime < nowTime;
           return (
-            <button
+            <div
               key={i}
-              onClick={() => onSelectSession(e, e._kind as any)}
-              className={`w-full text-left flex items-center gap-3 p-2 rounded-lg transition ${
+              className={`flex items-center gap-3 p-2 rounded-lg transition ${
                 isNow
                   ? 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-300'
                   : isNext
                   ? 'bg-amber-50 dark:bg-amber-900/20'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                  : ''
               } ${done ? 'opacity-50' : ''}`}
             >
               <div
@@ -69,8 +66,12 @@ export default function TodayCard({
                   {e.location && ` · ${e.location}`}
                 </div>
               </div>
-              {isNow && <span className="text-xs font-medium text-blue-600 dark:text-blue-400">En cours</span>}
-            </button>
+              {isNow && (
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                  En cours
+                </span>
+              )}
+            </div>
           );
         })}
       </div>
